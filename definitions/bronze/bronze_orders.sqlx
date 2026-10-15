@@ -1,0 +1,13 @@
+config {
+  type: "table",
+  schema: "bronze",
+  tags: ["bronze"],
+  description: "Orders as received from the raw layer."
+}
+
+SELECT
+  order_id,
+  customer_id,
+  order_total,
+  order_date
+FROM ${ref("raw_orders")}

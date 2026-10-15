@@ -1,0 +1,12 @@
+config {
+  type: "table",
+  schema: "silver",
+  tags: ["silver"],
+  description: "Customers with normalized email addresses."
+}
+
+SELECT
+  customer_id,
+  LOWER(TRIM(email)) AS email,
+  created_at
+FROM ${ref("bronze_customers")}

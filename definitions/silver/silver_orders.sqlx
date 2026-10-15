@@ -1,0 +1,14 @@
+config {
+  type: "table",
+  schema: "silver",
+  tags: ["silver"],
+  description: "Orders with non-negative totals only."
+}
+
+SELECT
+  order_id,
+  customer_id,
+  order_total,
+  order_date
+FROM ${ref("bronze_orders")}
+WHERE order_total >= 0

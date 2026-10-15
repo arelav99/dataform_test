@@ -102,3 +102,27 @@ Then in `docker-compose.yaml`, comment out `image:` and uncomment `build: .` in 
 - **`DefaultCredentialsError` in a Dataform task:** `secrets/gcp-sa.json` is missing or not mounted. Check it exists on the host and restart the stack.
 - **`PERMISSION_DENIED` from Dataform:** check the service account has Dataform Editor, and the Dataform service agent has the BigQuery roles from step 4.
 - **Import error mentioning `GCP_PROJECT_ID`, `DATAFORM_REGION`, or `DATAFORM_REPOSITORY_ID`:** these are missing from `.env`. Add them and restart.
+
+## Pipeline structure: `coarse`
+
+Layer-based. Dataform files are grouped by layer, and each Airflow DAG runs one whole layer.
+
+Dataform (`definitions/`):
+
+- `raw/`: declarations of the raw source tables. Not run by Airflow.
+- `bronze/`, `silver/`, `golden/`: tables tagged with their layer (`bronze`, `silver`, `golden`).
+
+Airflow (`dags/`):
+
+```
+coarse_orchestrator
+  └─ run_preprocessing   → coarse_preprocessing    (dummy)
+  └─ run_raw_bronze      → coarse_raw_bronze       (compile + run tag "bronze")
+  └─ run_silver          → coarse_silver           (compile + run tag "silver")
+  └─ run_golden          → coarse_golden           (compile + run tag "golden")
+  └─ run_postprocessing  → coarse_postprocessing   (dummy)
+```
+
+`coarse_orchestrator` triggers each DAG in turn and waits for it to finish. It runs only when triggered manually. Trigger it from the UI or with `docker compose run --rm airflow-cli airflow dags trigger coarse_orchestrator`.
+
+Shared Dataform helper: `dags/dataform_common.py`. It sets `git_commitish` to `DATAFORM_GIT_COMMITISH` (default `coarse`).
