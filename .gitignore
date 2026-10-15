@@ -1,0 +1,4 @@
+# Dataform
+node_modules/
+.df-credentials.json
+__pycache__/

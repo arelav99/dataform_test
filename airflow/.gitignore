@@ -1,0 +1,9 @@
+# Local secrets
+.env
+secrets/*
+!secrets/.gitkeep
+
+# Runtime output from the containers
+logs/*
+!logs/.gitkeep
+config/airflow.cfg
