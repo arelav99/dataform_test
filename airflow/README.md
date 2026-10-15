@@ -122,6 +122,8 @@ preprocessing → compile_dataform ─┬─ run_bronze_customers ──→ run_
                                   └─ (every run_* task) ──────────────────────────────┴─→ postprocessing
 ```
 
+- The task list is not hardcoded. At parse time, `dags/dataform_graph.py` reads the `.sqlx` files in `definitions/`, which are mounted read-only at `/opt/airflow/dataform/definitions`. It creates one task per table, view, or operation, and takes dependencies from `ref()` calls. Declarations are sources and get no task. Adding or removing a `.sqlx` file changes the DAG after the next parse (about 30 seconds). No Python edit is needed.
+- Limits: the DAG reads the files checked out locally, but Dataform compiles the pushed branch. Keep the two in sync before a run. The parser understands literal `config` and `ref("name")` syntax only, and it ignores `.js` files. If it ever misses something, `dataform compile --json` output is the exact graph.
 - `preprocessing` is a dummy task. `compile_dataform` compiles the git branch, since each Dataform run needs a compilation result.
 - Each `run_<table>` task runs one action with `included_targets`, so Dataform runs only that table.
 - Task order follows the SQLX references. A silver task waits for its bronze task, and the golden task waits for both silver tasks. Otherwise Dataform would read stale upstream tables.
