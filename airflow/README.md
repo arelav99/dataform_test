@@ -102,3 +102,29 @@ Then in `docker-compose.yaml`, comment out `image:` and uncomment `build: .` in 
 - **`DefaultCredentialsError` in a Dataform task:** `secrets/gcp-sa.json` is missing or not mounted. Check it exists on the host and restart the stack.
 - **`PERMISSION_DENIED` from Dataform:** check the service account has Dataform Editor, and the Dataform service agent has the BigQuery roles from step 4.
 - **Import error mentioning `GCP_PROJECT_ID`, `DATAFORM_REGION`, or `DATAFORM_REPOSITORY_ID`:** these are missing from `.env`. Add them and restart.
+
+## Pipeline structure: `granular`
+
+Table-based. Dataform files are grouped by domain, and the Airflow DAG runs one Dataform action per task.
+
+Dataform (`definitions/`):
+
+- `customers/`: `raw_customers` (declaration), `bronze_customers`, `silver_customers`.
+- `orders/`: `raw_orders` (declaration), `bronze_orders`, `silver_orders`.
+- `customer_orders/`: `golden_customer_orders`, which reads from both domains.
+
+Airflow (`dags/granular_pipeline.py`):
+
+```
+preprocessing → compile_dataform ─┬─ run_bronze_customers ──→ run_silver_customers ──┐
+                                  ├─ run_bronze_orders ─────→ run_silver_orders ─────┼─→ run_golden_customer_orders
+                                  │                                                  │
+                                  └─ (every run_* task) ──────────────────────────────┴─→ postprocessing
+```
+
+- `preprocessing` is a dummy task. `compile_dataform` compiles the git branch, since each Dataform run needs a compilation result.
+- Each `run_<table>` task runs one action with `included_targets`, so Dataform runs only that table.
+- Task order follows the SQLX references. A silver task waits for its bronze task, and the golden task waits for both silver tasks. Otherwise Dataform would read stale upstream tables.
+- Every run task must finish before `postprocessing` starts.
+
+The DAG compiles the git branch named by `DATAFORM_GIT_COMMITISH` (default `granular`).
