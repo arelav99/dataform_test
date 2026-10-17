@@ -77,7 +77,7 @@ Dataform compiles the git branch named in each DAG (`DATAFORM_GIT_COMMITISH`, de
 
 ```bash
 docker compose logs -f airflow-scheduler   # follow scheduler logs
-docker compose restart airflow-scheduler   # after changing plugins or config
+docker compose restart airflow-scheduler   # after changing config
 docker compose run --rm airflow-cli airflow dags list
 docker compose down                        # stop, keep metadata DB
 docker compose down -v                     # stop and delete metadata DB
@@ -97,7 +97,7 @@ Then in `docker-compose.yaml`, comment out `image:` and uncomment `build: .` in 
 ## Troubleshooting
 
 - **Port 8080 in use:** set `AIRFLOW_PORT` in `.env`, for example `8081`.
-- **Permission errors in `logs/`, `dags/`, or `plugins/`:** check that `AIRFLOW_UID` in `.env` matches `id -u`.
+- **Permission errors in `logs/` or `dags/`:** check that `AIRFLOW_UID` in `.env` matches `id -u`.
 - **Scheduler unhealthy right after start:** the first start can take a minute while the DB initializes.
 - **`DefaultCredentialsError` in a Dataform task:** `secrets/gcp-sa.json` is missing or not mounted. Check it exists on the host and restart the stack.
 - **`PERMISSION_DENIED` from Dataform:** check the service account has Dataform Editor, and the Dataform service agent has the BigQuery roles from step 4.
