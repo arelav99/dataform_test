@@ -69,7 +69,7 @@ docker compose ps
 
 Open http://localhost:8080 and log in with `airflow` / `airflow`.
 
-DAGs in `dags/` are picked up automatically. DAGs are unpaused on creation (`DAGS_ARE_PAUSED_AT_CREATION=false`). `smoke_test` is a sample DAG that confirms the Airflow setup works without GCP.
+DAGs in `dags/` are picked up automatically. DAGs are unpaused on creation (`DAGS_ARE_PAUSED_AT_CREATION=false`).
 
 Dataform compiles the git branch named in each DAG (`DATAFORM_GIT_COMMITISH`, default set per branch). Push your changes to that branch before you trigger a run.
 
