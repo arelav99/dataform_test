@@ -101,6 +101,7 @@ Then in `docker-compose.yaml`, comment out `image:` and uncomment `build: .` in 
 - **Scheduler unhealthy right after start:** the first start can take a minute while the DB initializes.
 - **`DefaultCredentialsError` in a Dataform task:** `secrets/gcp-sa.json` is missing or not mounted. Check it exists on the host and restart the stack.
 - **`PERMISSION_DENIED` from Dataform:** check the service account has Dataform Editor, and the Dataform service agent has the BigQuery roles from step 4.
+- **`check_gcp_access` task fails:** work through the GCP setup section above. The task reports exactly which env var or credential file is wrong, before any Dataform call runs.
 - **Import error mentioning `GCP_PROJECT_ID`, `DATAFORM_REGION`, or `DATAFORM_REPOSITORY_ID`:** these are missing from `.env`. Add them and restart.
 
 ## Pipeline structure: `single-task`
