@@ -5,8 +5,10 @@ from airflow.providers.google.cloud.operators.dataform import (
     DataformCreateCompilationResultOperator,
     DataformCreateWorkflowInvocationOperator,
 )
+from airflow.providers.standard.operators.python import PythonOperator
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.sdk import DAG
+from gcp_check import assert_gcp_access
 
 PROJECT_ID = os.environ["GCP_PROJECT_ID"]
 REGION = os.environ["DATAFORM_REGION"]
@@ -33,6 +35,7 @@ with DAG(
     tags=["single-task", "dataform"],
 ) as dag:
     preprocessing = trigger("run_preprocessing", "single_task_preprocessing")
+    check_gcp = PythonOperator(task_id="check_gcp_access", python_callable=assert_gcp_access)
     compile_dataform = DataformCreateCompilationResultOperator(
         task_id="compile",
         project_id=PROJECT_ID,
@@ -52,4 +55,4 @@ with DAG(
     )
     postprocessing = trigger("run_postprocessing", "single_task_postprocessing")
 
-    preprocessing >> compile_dataform >> run_dataform >> postprocessing
+    preprocessing >> check_gcp >> compile_dataform >> run_dataform >> postprocessing
