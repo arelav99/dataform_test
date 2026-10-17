@@ -6,8 +6,10 @@ from airflow.providers.google.cloud.operators.dataform import (
     DataformCreateWorkflowInvocationOperator,
 )
 from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.providers.standard.operators.python import PythonOperator
 from airflow.sdk import DAG
 from dataform_graph import load_actions
+from gcp_check import assert_gcp_access
 
 PROJECT_ID = os.environ["GCP_PROJECT_ID"]
 REGION = os.environ["DATAFORM_REGION"]
@@ -25,6 +27,7 @@ with DAG(
     tags=["granular", "dataform"],
 ) as dag:
     preprocessing = EmptyOperator(task_id="preprocessing")
+    check_gcp = PythonOperator(task_id="check_gcp_access", python_callable=assert_gcp_access)
     compile_dataform = DataformCreateCompilationResultOperator(
         task_id="compile_dataform",
         project_id=PROJECT_ID,
@@ -34,7 +37,7 @@ with DAG(
     )
     postprocessing = EmptyOperator(task_id="postprocessing")
 
-    preprocessing >> compile_dataform
+    preprocessing >> check_gcp >> compile_dataform
 
     tasks = {}
     for action in ACTIONS.values():
