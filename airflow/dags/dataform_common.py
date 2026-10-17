@@ -4,6 +4,8 @@ from airflow.providers.google.cloud.operators.dataform import (
     DataformCreateCompilationResultOperator,
     DataformCreateWorkflowInvocationOperator,
 )
+from airflow.providers.standard.operators.python import PythonOperator
+from gcp_check import assert_gcp_access
 
 PROJECT_ID = os.environ["GCP_PROJECT_ID"]
 REGION = os.environ["DATAFORM_REGION"]
@@ -13,6 +15,7 @@ GIT_COMMITISH = os.environ.get("DATAFORM_GIT_COMMITISH", "coarse")
 
 def run_dataform_tag(tag: str) -> None:
     """Compile the git branch and run every Dataform action with the given tag."""
+    check_task = PythonOperator(task_id="check_gcp_access", python_callable=assert_gcp_access)
     compile_task = DataformCreateCompilationResultOperator(
         task_id="compile",
         project_id=PROJECT_ID,
@@ -30,4 +33,4 @@ def run_dataform_tag(tag: str) -> None:
             "invocation_config": {"included_tags": [tag]},
         },
     )
-    compile_task >> run_task
+    check_task >> compile_task >> run_task
