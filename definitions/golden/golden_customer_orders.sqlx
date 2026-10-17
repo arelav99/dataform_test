@@ -1,0 +1,15 @@
+config {
+  type: "table",
+  schema: "golden",
+  description: "Order count and total spend per customer."
+}
+
+SELECT
+  c.customer_id,
+  c.email,
+  COUNT(o.order_id) AS order_count,
+  COALESCE(SUM(o.order_total), 0) AS total_spent
+FROM ${ref("silver_customers")} AS c
+LEFT JOIN ${ref("silver_orders")} AS o
+  ON o.customer_id = c.customer_id
+GROUP BY c.customer_id, c.email

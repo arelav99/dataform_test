@@ -1,0 +1,6 @@
+config {
+  type: "declaration",
+  schema: "raw",
+  name: "raw_orders",
+  description: "Raw order records, loaded upstream into the raw dataset."
+}

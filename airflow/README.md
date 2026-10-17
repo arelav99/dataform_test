@@ -102,3 +102,26 @@ Then in `docker-compose.yaml`, comment out `image:` and uncomment `build: .` in 
 - **`DefaultCredentialsError` in a Dataform task:** `secrets/gcp-sa.json` is missing or not mounted. Check it exists on the host and restart the stack.
 - **`PERMISSION_DENIED` from Dataform:** check the service account has Dataform Editor, and the Dataform service agent has the BigQuery roles from step 4.
 - **Import error mentioning `GCP_PROJECT_ID`, `DATAFORM_REGION`, or `DATAFORM_REPOSITORY_ID`:** these are missing from `.env`. Add them and restart.
+
+## Pipeline structure: `single-task`
+
+One Dataform run. Airflow does not split the workflow by layer or by table. Dataform runs every action, in the order of the `ref()` dependencies.
+
+Dataform (`definitions/`):
+
+- `raw/`: declarations of the raw source tables. Not executed; the other tables read them.
+- `bronze/`, `silver/`, `golden/`: the same tables as the other branches. No tags. Dependencies are only `ref()` calls.
+
+Airflow (`dags/`):
+
+```
+single_task
+  └─ run_preprocessing  → single_task_preprocessing   (dummy DAG)
+  └─ compile            → compile the git branch
+  └─ run_dataform       → one invocation, the whole workflow
+  └─ run_postprocessing → single_task_postprocessing  (dummy DAG)
+```
+
+`single_task` is the only DAG that talks to Dataform. It triggers the preprocessing DAG and waits, compiles and runs the whole workflow, then triggers the postprocessing DAG and waits. Trigger it from the UI or with `docker compose run --rm airflow-cli airflow dags trigger single_task`.
+
+It compiles the git branch named by `DATAFORM_GIT_COMMITISH` (default `single-task`). Push this branch before a run.
