@@ -32,6 +32,7 @@ with DAG(
     catchup=False,
     tags=["single-task", "dataform"],
 ) as dag:
+    preprocessing = trigger("run_preprocessing", "single_task_preprocessing")
     compile_dataform = DataformCreateCompilationResultOperator(
         task_id="compile",
         project_id=PROJECT_ID,
@@ -51,4 +52,4 @@ with DAG(
     )
     postprocessing = trigger("run_postprocessing", "single_task_postprocessing")
 
-    compile_dataform >> run_dataform >> postprocessing
+    preprocessing >> compile_dataform >> run_dataform >> postprocessing

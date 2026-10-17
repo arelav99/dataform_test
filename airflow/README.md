@@ -101,6 +101,7 @@ Then in `docker-compose.yaml`, comment out `image:` and uncomment `build: .` in 
 - **Scheduler unhealthy right after start:** the first start can take a minute while the DB initializes.
 - **`DefaultCredentialsError` in a Dataform task:** `secrets/gcp-sa.json` is missing or not mounted. Check it exists on the host and restart the stack.
 - **`PERMISSION_DENIED` from Dataform:** check the service account has Dataform Editor, and the Dataform service agent has the BigQuery roles from step 4.
+- **`check_gcp_access` task fails:** work through the GCP setup section above. The task reports the exact problem — missing env vars, a missing or invalid key file, or a repository the account cannot see — before any Dataform call runs.
 - **Import error mentioning `GCP_PROJECT_ID`, `DATAFORM_REGION`, or `DATAFORM_REPOSITORY_ID`:** these are missing from `.env`. Add them and restart.
 
 ## Pipeline structure: `single-task`
@@ -116,11 +117,12 @@ Airflow (`dags/`):
 
 ```
 single_task
+  └─ run_preprocessing  → single_task_preprocessing   (GCP preflight check)
   └─ compile            → compile the git branch
   └─ run_dataform       → one invocation, the whole workflow
   └─ run_postprocessing → single_task_postprocessing  (dummy DAG)
 ```
 
-`single_task` is the pipeline: it compiles the branch, runs the whole workflow in a single invocation, then triggers the postprocessing DAG and waits. Trigger it from the UI or with `docker compose run --rm airflow-cli airflow dags trigger single_task`.
+`single_task` is the pipeline. It triggers the preprocessing DAG and waits: that DAG runs `check_gcp_access`, which reports missing env vars or credential files and makes one real API call to confirm the Dataform repository is reachable. Only then does the pipeline compile the branch, run the whole workflow in a single invocation, and trigger the postprocessing DAG. Trigger it from the UI or with `docker compose run --rm airflow-cli airflow dags trigger single_task`.
 
 It compiles the git branch named by `DATAFORM_GIT_COMMITISH` (default `single-task`). Push this branch before a run.
