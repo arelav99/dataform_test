@@ -117,12 +117,12 @@ Airflow (`dags/`):
 
 ```
 single_task
-  └─ run_preprocessing  → single_task_preprocessing   (dummy DAG)
+  └─ run_preprocessing  → single_task_preprocessing   (GCP preflight check)
   └─ compile            → compile the git branch
   └─ run_dataform       → one invocation, the whole workflow
   └─ run_postprocessing → single_task_postprocessing  (dummy DAG)
 ```
 
-`single_task` is the only DAG that talks to Dataform. It triggers the preprocessing DAG and waits, compiles and runs the whole workflow, then triggers the postprocessing DAG and waits. Trigger it from the UI or with `docker compose run --rm airflow-cli airflow dags trigger single_task`.
+`single_task` is the pipeline. It triggers the preprocessing DAG and waits: that DAG runs `check_gcp_access`, which reports missing env vars or credential files and makes one real API call to confirm the Dataform repository is reachable. Only then does the pipeline compile the branch, run the whole workflow in a single invocation, and trigger the postprocessing DAG. Trigger it from the UI or with `docker compose run --rm airflow-cli airflow dags trigger single_task`.
 
 It compiles the git branch named by `DATAFORM_GIT_COMMITISH` (default `single-task`). Push this branch before a run.
