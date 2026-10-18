@@ -47,8 +47,8 @@ python3 -c "import base64,os;print(base64.urlsafe_b64encode(os.urandom(32)).deco
 
 1. **Dataform repository.** In the console (BigQuery → Dataform), create a repository in `DATAFORM_REGION` and connect it to this repository's git remote. Set the default branch to `main`. Connecting a remote requires the Developer Connect API or an HTTPS/SSH secret.
 2. **Raw tables.** Run `../gcp/seed_raw_tables.sql` in the BigQuery console. Use the location set in `defaultLocation` (`US` by default). The Dataform declarations read these tables.
-3. **Airflow service account.** Create a service account and grant it the **Dataform Editor** role (`roles/dataform.editor`). Create a JSON key and save it as `secrets/gcp-sa.json`. The `secrets/` folder is gitignored.
-4. **Dataform runtime permissions.** By default, Dataform runs BigQuery jobs as its service agent `service-PROJECT_NUMBER@gcp-sa-dataform.iam.gserviceaccount.com`. Grant that agent `roles/bigquery.dataEditor` and `roles/bigquery.jobUser` on the project.
+3. **Airflow service account.** Create a service account and grant it the **Dataform Editor** role (`roles/dataform.editor`). Create a JSON key and save it as `secrets/gcp-sa.json`. The `secrets/` folder is gitignored. The repository uses strict act-as, so also grant this account **Service Account User** (`roles/iam.serviceAccountUser`) on itself (IAM on the service account, not the project). The DAG passes this account to each Dataform run.
+4. **Dataform runtime permissions.** The DAG runs each invocation as the Airflow account, so BigQuery jobs run as it too. Grant that account `roles/bigquery.dataEditor` and `roles/bigquery.jobUser` on the project. Also let Dataform's service agent `service-PROJECT_NUMBER@gcp-sa-dataform.iam.gserviceaccount.com` create tokens for the Airflow account: grant it **Service Account Token Creator** (`roles/iam.serviceAccountTokenCreator`) on the Airflow account.
 
 The DAGs read `GOOGLE_APPLICATION_CREDENTIALS=/opt/airflow/secrets/gcp-sa.json` and the default connection `google-cloud-platform://`, which is set in `docker-compose.yaml`.
 
