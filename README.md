@@ -121,8 +121,6 @@ The graph has to come from the definitions, and there are three places it can co
 3. The cache key is the commit SHA of the compilation result. A new commit then produces a new cache entry.
 4. The graph now depends on a previous run having happened, so the state lives outside git. This is the main reason option 3 is the default.
 
-**Recommendation.** Option 3 is the most accurate and the least fragile at parse time. It should run in CI on each push: a GitHub Actions job runs `dataform compile --json`, fails if the committed graph differs from the output, and the DAG reads the committed file. Option 1 is fine while the definitions use only plain `ref()` calls. Option 2 fits when there is no CI and the team can accept the credentials at parse time.
-
 ## Timing: granular vs single-task
 
 Measured from the Airflow logs of one successful run per branch, on the same sample data:
