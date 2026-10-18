@@ -1,4 +1,0 @@
-defaultProject: REPLACE_WITH_GCP_PROJECT_ID
-defaultLocation: US
-defaultDataset: dataform
-dataformCoreVersion: 3.1.0
